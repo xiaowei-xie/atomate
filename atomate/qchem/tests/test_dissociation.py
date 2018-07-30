@@ -46,10 +46,9 @@ target_entries = list(
     }))
 
 for entry in target_entries:
-    print(entry)
-    initial_mol_graph = build_MoleculeGraph(entry["input"]["initial_molecule"])
-    final_mol_graph = build_MoleculeGraph(entry["output"]["optimized_molecule"])
-    if is_isomorphic(mol_graph.graph, initial_mol_graph.graph) and is_isomorphic(mol_graph.graph, final_mol_graph.graph):
+    initial_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"])).graph
+    final_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"])).graph
+    if is_isomorphic(mol_graph.graph, initial_graph) and is_isomorphic(mol_graph.graph, final_graph):
         target_entry = entry
 
 fragment_entries = list(
