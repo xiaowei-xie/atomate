@@ -46,6 +46,7 @@ target_entries = list(
     }))
 
 for entry in target_entries:
+    print(entry)
     initial_mol_graph = build_MoleculeGraph(entry["input"]["initial_molecule"])
     final_mol_graph = build_MoleculeGraph(entry["output"]["optimized_molecule"])
     if is_isomorphic(mol_graph.graph, initial_mol_graph.graph) and is_isomorphic(mol_graph.graph, final_mol_graph.graph):
