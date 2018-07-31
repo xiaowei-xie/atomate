@@ -154,7 +154,8 @@ class QChemDrone(AbstractDrone):
 
             d["input"] = {
                 "initial_molecule": d_calc_init["initial_molecule"],
-                "job_type": d_calc_init["input"]["rem"]["job_type"]
+                "job_type": d_calc_init["input"]["rem"]["job_type"],
+                "rem": d_calc_init["input"]["rem"]
             }
             d["output"] = {
                 "initial_molecule": d_calc_final["initial_molecule"],
