@@ -42,7 +42,7 @@ target_entries = list(
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
-        "calcs_reversed": {$slice: -1}
+        "calcs_reversed.-1.rem": 1
     }))
 
 num_good_entries = 0
