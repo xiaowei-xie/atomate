@@ -71,10 +71,19 @@ fragment_entries = list(
         "calcs_reversed.input.rem": 1
     }))
 
-for entry in fragment_entries:
-    print(entry)
-    print()
+print(len(fragment_entries))
 
-bond_dissociation = BondDissociationEnergies(target_entry, fragment_entries)
+unique_fragment_entries = []
+for entry in fragment_entries:
+    found_equivalent = False
+    for unique_entry in unique_fragment_entries:
+        if entry["output"] == unique_entry["output"]:
+            found_equivalent = True
+    if not found_equivalent:
+        unique_fragment_entries += [entry]
+
+print(len(unique_fragment_entries))
+
+bond_dissociation = BondDissociationEnergies(target_entry, unique_fragment_entries)
 print(bond_dissociation.bond_dissociation_energies)
 
