@@ -44,11 +44,15 @@ target_entries = list(
         "output": 1
     }))
 
+num_good_entries = 0
 for entry in target_entries:
     initial_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"])).graph
     final_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"])).graph
     if is_isomorphic(mol_graph.graph, initial_graph) and is_isomorphic(mol_graph.graph, final_graph):
+        num_good_entries += 1
         target_entry = entry
+
+print("There are " + str(num_good_entries) + " entries to choose from!")
 
 fragment_entries = list(
     mmdb.collection.find({
