@@ -52,15 +52,17 @@ for entry in target_entries:
     if is_isomorphic(mol_graph.graph, initial_mol_graph.graph) and is_isomorphic(mol_graph.graph, final_mol_graph.graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity:
         num_good_entries += 1
         target_entry = entry
-        print(entry)
 
-print("There are " + str(num_good_entries) + " entries to choose from!")
+if num_good_entries > 1:
+    print("WARNING: There are " + str(num_good_entries) + " entries to choose from! Currently using the last one...")
 
 fragment_entries = list(
     mmdb.collection.find({
         "formula_pretty": {
             "$in": unique_formulae
-        }
+        },
+        "calcs_reversed.input.rem.method": target_entry["calcs_reversed"]["-1"]["input"]["rem"]["method"],
+        "calcs_reversed.input.rem.basis": target_entry["calcs_reversed"]["-1"]["input"]["rem"]["basis"]
     }, {
         "formula_pretty": 1,
         "input": 1,
