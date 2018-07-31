@@ -70,6 +70,8 @@ fragment_entries = list(
         "calcs_reversed.input.rem": 1
     }))
 
+print(fragment_entries)
+
 bond_dissociation = BondDissociationEnergies(target_entry, fragment_entries)
 print(bond_dissociation.bond_dissociation_energies)
 
