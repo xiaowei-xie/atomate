@@ -40,9 +40,8 @@ target_entries = list(
         "formula_pretty": mol.composition.reduced_formula
     }, {
         "formula_pretty": 1,
-        "input.initial_molecule": 1,
-        "output.optimized_molecule": 1,
-        "output.final_energy": 1
+        "input": 1,
+        "output": 1
     }))
 
 for entry in target_entries:
@@ -58,9 +57,8 @@ fragment_entries = list(
         }
     }, {
         "formula_pretty": 1,
-        "input.initial_molecule": 1,
-        "output.optimized_molecule": 1,
-        "output.final_energy": 1
+        "input": 1,
+        "output": 1
     }))
 
 dissociation_energies = BondDissociationEnergies(target_entry, fragment_entries)
