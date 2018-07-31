@@ -61,6 +61,6 @@ fragment_entries = list(
         "output": 1
     }))
 
-dissociation_energies = BondDissociationEnergies(target_entry, fragment_entries)
-print(dissociation_energies)
+bond_dissociation = BondDissociationEnergies(target_entry, fragment_entries)
+print(bond_dissociation.bond_dissociation_energies)
 
