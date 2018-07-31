@@ -47,9 +47,9 @@ target_entries = list(
 
 num_good_entries = 0
 for entry in target_entries:
-    initial_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"])).graph
-    final_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"])).graph
-    if is_isomorphic(mol_graph.graph, initial_graph) and is_isomorphic(mol_graph.graph, final_graph):
+    initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]))
+    final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]))
+    if is_isomorphic(mol_graph.graph, initial_mol_graph.graph) and is_isomorphic(mol_graph.graph, final_mol_graph.graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity:
         num_good_entries += 1
         target_entry = entry
         print(entry)
@@ -64,7 +64,8 @@ fragment_entries = list(
     }, {
         "formula_pretty": 1,
         "input": 1,
-        "output": 1
+        "output": 1,
+        "calcs_reversed.input.rem": 1
     }))
 
 bond_dissociation = BondDissociationEnergies(target_entry, fragment_entries)
