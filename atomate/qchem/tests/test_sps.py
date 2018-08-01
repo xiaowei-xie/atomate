@@ -132,7 +132,7 @@ target_entries = list(
             "$in": unique_formulae
         },
     }, {
-        "dir_name": 1
+        "dir_name": 1,
         "calcs_reversed": 1
     }))
 
