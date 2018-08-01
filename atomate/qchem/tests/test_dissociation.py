@@ -72,10 +72,17 @@ fragment_entries = list(
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
-        "calcs_reversed.input.rem": 1
+        "calcs_reversed.input.rem": 1,
+        "task_id": 1
     }))
 
 print(len(fragment_entries))
+
+missing_tasks = ['2376', '2617', '2427']
+
+for entry in fragment_entries:
+    if entry["task_id"] in missing_tasks:
+        print("Found missing task " + str(entry["task_id"]) + "!")
 
 unique_fragment_entries = []
 for entry in fragment_entries:
