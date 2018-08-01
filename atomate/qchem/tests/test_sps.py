@@ -98,26 +98,46 @@ from atomate.qchem.drones import QChemDrone
 # # print(bond_dissociation.bond_dissociation_energies)
 
 
+# db_file = "/global/homes/s/sblau/config/db.json"
+# mmdb = QChemCalcDb.from_db_file(db_file, admin=True)
+# target_entries = list(
+#     mmdb.collection.find({
+#         "input.job_type": "sp"
+#     }, {
+#         "dir_name": 1,
+#         "task_id": 1
+#     }))
+
+# print(len(target_entries))
+# for entry in target_entries:
+#     print()
+#     print(entry)
+#     drone = QChemDrone()
+#     new_doc = drone.assimilate(path=entry["dir_name"],
+#                                input_file="mol.qin.gz",
+#                                output_file="mol.qout.gz",
+#                                multirun=False)
+#     # print(new_doc)
+#     mmdb.insert(new_doc, update_duplicates=True)
+
+
 db_file = "/global/homes/s/sblau/config/db.json"
 mmdb = QChemCalcDb.from_db_file(db_file, admin=True)
+
+unique_formulae = ['CSO2F3', 'CSNO2F3', 'C2S2NO4F5']
+
 target_entries = list(
     mmdb.collection.find({
-        "input.job_type": "sp"
+        "formula_pretty": {
+            "$in": unique_formulae
+        },
     }, {
-        "dir_name": 1,
-        "task_id": 1
+        "dir_name": 1
+        "calcs_reversed": 1
     }))
 
 print(len(target_entries))
 for entry in target_entries:
     print()
     print(entry)
-    drone = QChemDrone()
-    new_doc = drone.assimilate(path=entry["dir_name"],
-                               input_file="mol.qin.gz",
-                               output_file="mol.qout.gz",
-                               multirun=False)
-    # print(new_doc)
-    mmdb.insert(new_doc, update_duplicates=True)
-
 
