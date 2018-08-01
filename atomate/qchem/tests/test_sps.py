@@ -12,6 +12,7 @@ from pymatgen.analysis.bond_dissociation import BondDissociationEnergies
 from atomate.qchem.database import QChemCalcDb
 from atomate.qchem.firetasks.fragmenter import build_MoleculeGraph, build_unique_fragments, build_unique_molecules, is_isomorphic
 from atomate.qchem.firetasks.parse_outputs import QChemToDb
+from atomate.qchem.drones import QChemDrone
 
 # db_file = "/global/homes/s/sblau/config/db.json"
 # # mol = Molecule.from_file("../test_files/top_11/BF4-.xyz")
@@ -111,4 +112,12 @@ print(len(target_entries))
 for entry in target_entries:
     print()
     print(entry)
+    drone = QChemDrone()
+    new_doc = drone.assimilate(path=entry["dir_name"],
+                               input_file="mol.qin.gz",
+                               output_file="mol.qout.gz",
+                               multirun=False)
+    print(new_doc)
+    # mmdb.insert(new_doc, update_duplicates=True)
+
 
