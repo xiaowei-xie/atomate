@@ -78,7 +78,7 @@ fragment_entries = list(
 
 print(len(fragment_entries))
 
-missing_tasks = ['2376', '2617', '2427']
+missing_tasks = ['2376', '2617', '2427', '2613']
 
 for entry in fragment_entries:
     if entry["task_id"] in missing_tasks:
