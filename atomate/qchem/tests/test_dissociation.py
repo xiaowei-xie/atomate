@@ -96,6 +96,11 @@ for entry in fragment_entries:
 
 print(len(unique_fragment_entries))
 
+for entry in unique_fragment_entries:
+    # print(entry["task_id"])
+    if entry["task_id"] in missing_tasks:
+        print("Found missing task " + str(entry["task_id"]) + "!")
+
 bond_dissociation = BondDissociationEnergies(target_entry, unique_fragment_entries)
 print(bond_dissociation.bond_dissociation_energies)
 
