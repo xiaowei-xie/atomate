@@ -135,7 +135,8 @@ target_entries = list(
         "dir_name": 1,
         "formula_pretty": 1,
         "task_id": 1,
-        "calcs_reversed.input": 1
+        "input": 1,
+        "output": 1
     }))
 
 print(len(target_entries))
