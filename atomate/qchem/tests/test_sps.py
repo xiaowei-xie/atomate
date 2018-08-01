@@ -103,7 +103,7 @@ target_entries = list(
     mmdb.collection.find({
         "input.job_type": "sp"
     }, {
-        "calc_dir": 1
+        "dir_name": 1
     }))
 
 print(len(target_entries))
