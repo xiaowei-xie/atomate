@@ -133,7 +133,7 @@ target_entries = list(
         },
     }, {
         "dir_name": 1,
-        "calcs_reversed": 1
+        "calcs_reversed.input": 1
     }))
 
 print(len(target_entries))
