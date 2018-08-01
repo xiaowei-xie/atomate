@@ -133,6 +133,7 @@ target_entries = list(
         },
     }, {
         "dir_name": 1,
+        "formula_pretty": 1,
         "calcs_reversed.input": 1
     }))
 
