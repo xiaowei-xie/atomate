@@ -14,9 +14,10 @@ from atomate.qchem.firetasks.fragmenter import build_MoleculeGraph, build_unique
 
 
 db_file = "/global/homes/s/sblau/config/db.json"
-mol = Molecule.from_file("../test_files/top_11/BF4-.xyz")
+# mol = Molecule.from_file("../test_files/top_11/BF4-.xyz")
 # mol = Molecule.from_file("../test_files/top_11/PF6-.xyz")
 # mol = Molecule.from_file("../test_files/top_11/FSI-.xyz")
+mol = Molecule.from_file("../test_files/top_11/TFSI-.xyz")
 mol.set_charge_and_spin(charge=-1)
 
 # build the MoleculeGraph
