@@ -71,7 +71,8 @@ fragment_entries = list(
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
-        "calcs_reversed": 1
+        "calcs_reversed": 1,
+        "dir_name": 1
     }))
 
 print(len(fragment_entries))
