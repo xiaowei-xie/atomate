@@ -117,7 +117,7 @@ for entry in target_entries:
                                input_file="mol.qin.gz",
                                output_file="mol.qout.gz",
                                multirun=False)
-    print(new_doc)
-    # mmdb.insert(new_doc, update_duplicates=True)
+    # print(new_doc)
+    mmdb.insert(new_doc, update_duplicates=True)
 
 
