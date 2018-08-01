@@ -75,8 +75,11 @@ fragment_entries = list(
     }))
 
 print(len(fragment_entries))
+print()
 
-print(fragment_entries)
+for entry in fragment_entries:
+    print(entry)
+    print()
 
 # unique_fragment_entries = []
 # for entry in fragment_entries:
