@@ -73,7 +73,8 @@ fragment_entries = list(
         "input": 1,
         "output": 1,
         "calcs_reversed.input.rem": 1,
-        "task_id": 1
+        "task_id": 1,
+        "dir_name": 1
     }))
 
 print(len(fragment_entries))
