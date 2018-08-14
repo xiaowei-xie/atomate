@@ -9,8 +9,10 @@ import unittest
 import numpy as np
 from pymatgen.core.structure import Molecule
 from pymatgen.analysis.bond_dissociation import BondDissociationEnergies
+from pymatgen.analysis.local_env import OpenBabelNN
 from atomate.qchem.database import QChemCalcDb
-from atomate.qchem.firetasks.fragmenter import build_MoleculeGraph, build_unique_fragments, build_unique_molecules, is_isomorphic
+from atomate.qchem.firetasks.fragmenter import FragmentMolecule
+from pymatgen.analysis.graphs import build_MoleculeGraph
 
 
 db_file = "/global/homes/s/sblau/config/db.json"
@@ -21,21 +23,22 @@ mol = Molecule.from_file("../test_files/top_11/TFSI-.xyz")
 mol.set_charge_and_spin(charge=-1)
 
 # build the MoleculeGraph
-mol_graph = build_MoleculeGraph(mol)
+mol_graph = build_MoleculeGraph(mol,
+                                strategy=OpenBabelNN,
+                                reorder=False,
+                                extend_structure=False)
 
-# find all unique fragments
-unique_fragments = build_unique_fragments(mol_graph)
-
-# build three molecule objects for each unique fragment:
-# original charge, original charge +1, original charge -1
-unique_molecules = build_unique_molecules(unique_fragments, mol.charge)
+FM = FragmentMolecule()
+FM.mol = mol
+FM.unique_fragments = mol_graph.build_unique_fragments()
+FM._build_unique_relevant_molecules()
 
 unique_formulae = []
-for molecule in unique_molecules:
+for molecule in FM.unique_molecules:
     if molecule.composition.reduced_formula not in unique_formulae:
         unique_formulae.append(molecule.composition.reduced_formula)
 
-# attempt to connect to the database to later check if a fragment has already been calculated
+
 mmdb = QChemCalcDb.from_db_file(db_file, admin=True)
 
 target_entries = list(
@@ -50,15 +53,21 @@ target_entries = list(
 
 num_good_entries = 0
 for entry in target_entries:
-    initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]))
-    final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]))
-    if is_isomorphic(mol_graph.graph, initial_mol_graph.graph) and is_isomorphic(mol_graph.graph, final_mol_graph.graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
+    initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]),
+                                            strategy=OpenBabelNN,
+                                            reorder=False,
+                                            extend_structure=False)
+    final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]),
+                                          strategy=OpenBabelNN,
+                                          reorder=False,
+                                          extend_structure=False)
+    if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph.graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
         # print(entry)
         num_good_entries += 1
         target_entry = entry
 
 if num_good_entries > 1:
-    print("WARNING: There are " + str(num_good_entries) + " entries to choose from! Currently using the last one...")
+    print("WARNING: There are " + str(num_good_entries) + " valid entries to choose from! Currently using the last one...")
 
 fragment_entries = list(
     mmdb.collection.find({
