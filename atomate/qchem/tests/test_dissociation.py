@@ -19,8 +19,9 @@ db_file = "/global/homes/s/sblau/config/db.json"
 # mol = Molecule.from_file("../test_files/top_11/BF4-.xyz")
 # mol = Molecule.from_file("../test_files/top_11/PF6-.xyz")
 # mol = Molecule.from_file("../test_files/top_11/FSI-.xyz")
-mol = Molecule.from_file("../test_files/top_11/TFSI-.xyz")
-mol.set_charge_and_spin(charge=-1)
+# mol = Molecule.from_file("../test_files/top_11/TFSI-.xyz")
+# mol.set_charge_and_spin(charge=-1)
+mol = Molecule.from_file("../test_files/top_11/PC.xyz")
 
 # build the MoleculeGraph
 mol_graph = build_MoleculeGraph(mol,
@@ -53,18 +54,19 @@ target_entries = list(
 
 num_good_entries = 0
 for entry in target_entries:
-    initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]),
-                                            strategy=OpenBabelNN,
-                                            reorder=False,
-                                            extend_structure=False)
-    final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]),
-                                          strategy=OpenBabelNN,
-                                          reorder=False,
-                                          extend_structure=False)
-    if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
-        # print(entry)
-        num_good_entries += 1
-        target_entry = entry
+    if "optimized_molecule" in entry["output"]:
+        initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]),
+                                                strategy=OpenBabelNN,
+                                                reorder=False,
+                                                extend_structure=False)
+        final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]),
+                                              strategy=OpenBabelNN,
+                                              reorder=False,
+                                              extend_structure=False)
+        if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
+            # print(entry)
+            num_good_entries += 1
+            target_entry = entry
 
 if num_good_entries > 1:
     print("WARNING: There are " + str(num_good_entries) + " valid entries to choose from! Currently using the last one...")
