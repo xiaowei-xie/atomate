@@ -16,8 +16,8 @@ from pymatgen.analysis.graphs import build_MoleculeGraph
 
 
 db_file = "/global/homes/s/sblau/config/db.json"
-xyz_file = "../test_files/top_11/BF4-.xyz"
-charge = -1
+xyz_file = "../test_files/top_11/PC.xyz"
+charge = 0
 limit_charges = True
 
 if limit_charges:
