@@ -18,6 +18,17 @@ from pymatgen.analysis.graphs import build_MoleculeGraph
 db_file = "/global/homes/s/sblau/config/db.json"
 xyz_file = "../test_files/top_11/BF4-.xyz"
 charge = -1
+limit_charges = True
+
+if limit_charges:
+    if charge > 0:
+        valid_charges = [charge, charge-1]
+    elif charge < 0:
+        valid_charges = [charge, charge+1]
+    else:
+        valid_charges = [-1, 0, 1]
+else:
+    valid_charges = [charge-2, charge-1, charge, charge+1, charge+2]
 
 mol = Molecule.from_file(xyz_file)
 mol.set_charge_and_spin(charge=charge)
@@ -72,6 +83,9 @@ fragment_entries = list(
     mmdb.collection.find({
         "formula_pretty": {
             "$in": unique_formulae
+        },
+        "input.initial_molecule.charge": {
+            "$in": valid_charges
         },
         "calcs_reversed.input.rem.method": target_entry["calcs_reversed"][-1]["input"]["rem"]["method"],
         "calcs_reversed.input.rem.basis": target_entry["calcs_reversed"][-1]["input"]["rem"]["basis"],
