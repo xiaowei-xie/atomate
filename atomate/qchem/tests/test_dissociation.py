@@ -16,14 +16,12 @@ from pymatgen.analysis.graphs import build_MoleculeGraph
 
 
 db_file = "/global/homes/s/sblau/config/db.json"
-# mol = Molecule.from_file("../test_files/top_11/BF4-.xyz")
-# mol = Molecule.from_file("../test_files/top_11/PF6-.xyz")
-# mol = Molecule.from_file("../test_files/top_11/FSI-.xyz")
-# mol = Molecule.from_file("../test_files/top_11/TFSI-.xyz")
-# mol.set_charge_and_spin(charge=-1)
-mol = Molecule.from_file("../test_files/top_11/PC.xyz")
+xyz_file = "../test_files/top_11/BF4-.xyz"
+charge = -1
 
-# build the MoleculeGraph
+mol = Molecule.from_file(xyz_file)
+mol.set_charge_and_spin(charge=charge)
+
 mol_graph = build_MoleculeGraph(mol,
                                 strategy=OpenBabelNN,
                                 reorder=False,
@@ -64,7 +62,6 @@ for entry in target_entries:
                                               reorder=False,
                                               extend_structure=False)
         if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
-            # print(entry)
             num_good_entries += 1
             target_entry = entry
 
@@ -90,13 +87,6 @@ fragment_entries = list(
 
 print(len(fragment_entries))
 
-# missing_tasks = [2376, 2617, 2427, 2613]
-
-# for entry in fragment_entries:
-#     # print(entry["task_id"])
-#     if entry["task_id"] in missing_tasks:
-#         print("Found missing task " + str(entry["task_id"]) + "!")
-
 unique_fragment_entries = []
 for entry in fragment_entries:
     found_equivalent = False
@@ -107,11 +97,6 @@ for entry in fragment_entries:
         unique_fragment_entries += [entry]
 
 print(len(unique_fragment_entries))
-
-# for entry in unique_fragment_entries:
-#     # print(entry["task_id"])
-#     if entry["task_id"] in missing_tasks:
-#         print("Found missing task " + str(entry["task_id"]) + "!")
 
 bond_dissociation = BondDissociationEnergies(target_entry, unique_fragment_entries)
 print(bond_dissociation.bond_dissociation_energies)
