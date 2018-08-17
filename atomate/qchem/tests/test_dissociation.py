@@ -110,10 +110,14 @@ print(len(fragment_entries))
 def agnostize(entry):
     to_return = {}
     to_return["formula_pretty"] = entry["formula_pretty"]
-    to_return["smiles"] = entry["smiles"]
+    if "smiles" in entry:
+        to_return["smiles"] = entry["smiles"]
     to_return["final_energy"] = entry["output"]["final_energy"]
     to_return["initial_molecule"] = entry["input"]["initial_molecule"]
-    to_return["final_molecule"] = entry["output"]["initial_molecule"]
+    if "optimized_molecule" in entry["output"]:
+        to_return["final_molecule"] = entry["output"]["optimized_molecule"]
+    else:
+        to_return["final_molecule"] = entry["output"]["initial_molecule"]
     return to_return
 
 unique_fragment_entries = []
@@ -129,6 +133,6 @@ for entry in fragment_entries:
 
 print(len(unique_fragment_entries))
 
-bond_dissociation = BondDissociationEnergies(agnostize(target_entry), unique_fragment_entries)
+bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries)
 print(bond_dissociation.bond_dissociation_energies)
 
