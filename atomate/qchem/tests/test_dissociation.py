@@ -15,9 +15,12 @@ from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from pymatgen.analysis.graphs import build_MoleculeGraph
 
 
-db_file = "/global/homes/s/sblau/config/db.json"
+# db_file = "/global/homes/s/sblau/config/db.json"
+db_file = "/Users/samuelblau/Desktop/db.json"
 xyz_file = "../test_files/top_11/PC.xyz"
 charge = 0
+# xyz_file = "../test_files/top_11/TFSI-.xyz"
+# charge = -1
 limit_charges = True
 
 if limit_charges:
@@ -61,6 +64,8 @@ target_entries = list(
         "calcs_reversed.input.rem": 1
     }))
 
+print(len(target_entries))
+
 num_good_entries = 0
 for entry in target_entries:
     if "optimized_molecule" in entry["output"]:
@@ -102,7 +107,17 @@ fragment_entries = list(
 
 print(len(fragment_entries))
 
+def agnostize(entry):
+    to_return = {}
+    to_return["formula_pretty"] = entry["formula_pretty"]
+    to_return["smiles"] = entry["smiles"]
+    to_return["final_energy"] = entry["output"]["final_energy"]
+    to_return["initial_molecule"] = entry["input"]["initial_molecule"]
+    to_return["final_molecule"] = entry["output"]["initial_molecule"]
+    return to_return
+
 unique_fragment_entries = []
+agnostic_entries = []
 for entry in fragment_entries:
     found_equivalent = False
     for unique_entry in unique_fragment_entries:
@@ -110,9 +125,10 @@ for entry in fragment_entries:
             found_equivalent = True
     if not found_equivalent:
         unique_fragment_entries += [entry]
+        agnostic_entries += [agnostize(entry)]
 
 print(len(unique_fragment_entries))
 
-bond_dissociation = BondDissociationEnergies(target_entry, unique_fragment_entries)
+bond_dissociation = BondDissociationEnergies(agnostize(target_entry), unique_fragment_entries)
 print(bond_dissociation.bond_dissociation_energies)
 
