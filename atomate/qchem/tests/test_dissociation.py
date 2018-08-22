@@ -114,10 +114,7 @@ def agnostize(entry):
         to_return["smiles"] = entry["smiles"]
     to_return["final_energy"] = entry["output"]["final_energy"]
     to_return["initial_molecule"] = entry["input"]["initial_molecule"]
-    if "optimized_molecule" in entry["output"]:
-        to_return["final_molecule"] = entry["output"]["optimized_molecule"]
-    else:
-        to_return["final_molecule"] = entry["output"]["initial_molecule"]
+    to_return["final_molecule"] = entry["output"]["initial_molecule"]
     return to_return
 
 unique_fragment_entries = []
