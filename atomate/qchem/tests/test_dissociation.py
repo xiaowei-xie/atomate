@@ -114,7 +114,11 @@ def agnostize(entry):
         to_return["smiles"] = entry["smiles"]
     to_return["final_energy"] = entry["output"]["final_energy"]
     to_return["initial_molecule"] = entry["input"]["initial_molecule"]
-    to_return["final_molecule"] = entry["output"]["initial_molecule"]
+    if "optimized_molecule" not in entry["output"]:
+        assert(entry["calcs_reversed"][-1]["input"]["rem"]["job_type"] == "sp")
+        to_return["final_molecule"] = entry["output"]["initial_molecule"]
+    else:
+        to_return["final_molecule"] = entry["output"]["optimized_molecule"]
     return to_return
 
 unique_fragment_entries = []
@@ -130,6 +134,6 @@ for entry in fragment_entries:
 
 print(len(unique_fragment_entries))
 
-bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries)
+bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries, limit_charges)
 print(bond_dissociation.bond_dissociation_energies)
 
