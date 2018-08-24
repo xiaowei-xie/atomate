@@ -115,7 +115,8 @@ def agnostize(entry):
     to_return["final_energy"] = entry["output"]["final_energy"]
     to_return["initial_molecule"] = entry["input"]["initial_molecule"]
     if "optimized_molecule" not in entry["output"]:
-        assert(entry["calcs_reversed"][-1]["input"]["rem"]["job_type"] == "sp")
+        if entry["calcs_reversed"][-1]["input"]["rem"]["job_type"] != "sp":
+            raise AssertionError("Should only fail to find an optimized_molecule entry from a single point calculation!")
         to_return["final_molecule"] = entry["output"]["initial_molecule"]
     else:
         to_return["final_molecule"] = entry["output"]["optimized_molecule"]
