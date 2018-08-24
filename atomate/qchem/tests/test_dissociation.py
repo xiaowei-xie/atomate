@@ -15,13 +15,24 @@ from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from pymatgen.analysis.graphs import build_MoleculeGraph
 
 
+# First, define the db_file for previously calculated fragment entries,
+# the XYZ file and the charge of the principle molecule of which we aim
+# to compute the bond dissociation energies
+
 # db_file = "/global/homes/s/sblau/config/db.json"
 db_file = "/Users/samuelblau/Desktop/db.json"
 # xyz_file = "../test_files/top_11/PC.xyz"
 # charge = 0
 xyz_file = "../test_files/top_11/TFSI-.xyz"
 charge = -1
-allow_additional_charge_separation = True
+
+# By default, we will consider one level of charge separation. If additional
+# charge separation should be considered, set the following parameter to True:
+allow_additional_charge_separation = False
+
+# By default, we will only examine bond dissociation energies when breaking
+# one bond at a time. If two ring bonds breaking simultaneously should be
+# considered, set the following parameter to True:
 multibreak = False
 
 if not allow_additional_charge_separation:
@@ -34,27 +45,18 @@ if not allow_additional_charge_separation:
 else:
     valid_charges = [charge-2, charge-1, charge, charge+1, charge+2]
 
+# Build the principle Molecule and MoleculeGraph
 mol = Molecule.from_file(xyz_file)
 mol.set_charge_and_spin(charge=charge)
-
 mol_graph = build_MoleculeGraph(mol,
                                 strategy=OpenBabelNN,
                                 reorder=False,
                                 extend_structure=False)
 
-FM = FragmentMolecule()
-FM.mol = mol
-FM.unique_fragments = mol_graph.build_unique_fragments()
-FM._build_unique_relevant_molecules()
-
-unique_formulae = []
-for molecule in FM.unique_molecules:
-    if molecule.composition.reduced_formula not in unique_formulae:
-        unique_formulae.append(molecule.composition.reduced_formula)
-
-
+# Connect to the database
 mmdb = QChemCalcDb.from_db_file(db_file, admin=True)
 
+# Find all entries in the database for our principle
 target_entries = list(
     mmdb.collection.find({
         "formula_pretty": mol.composition.reduced_formula
@@ -65,8 +67,8 @@ target_entries = list(
         "calcs_reversed.input.rem": 1
     }))
 
-print(len(target_entries))
-
+# Then narrow those to an optimized entry which has our desired charge, multiplicity, and SCF strategy.
+# NOTE: We will need to check for the correct PCM as well in the future. 
 num_good_entries = 0
 for entry in target_entries:
     if "optimized_molecule" in entry["output"]:
@@ -82,9 +84,26 @@ for entry in target_entries:
             num_good_entries += 1
             target_entry = entry
 
+# There should only be one principle entry!
 if num_good_entries > 1:
     print("WARNING: There are " + str(num_good_entries) + " valid entries to choose from! Currently using the last one...")
 
+# Leverage the FragmentMolecule firetask in order to build a list of
+# all unique molecules relevant to the fragmentation and thus BDEs 
+# for the principle:
+FM = FragmentMolecule()
+FM.mol = mol
+FM.unique_fragments = mol_graph.build_unique_fragments()
+FM._build_unique_relevant_molecules()
+
+# Convert the list of molecules into a list of formulae which can then
+# be used to search our database:
+unique_formulae = []
+for molecule in FM.unique_molecules:
+    if molecule.composition.reduced_formula not in unique_formulae:
+        unique_formulae.append(molecule.composition.reduced_formula)
+
+# Find all fragment entries in our database using our unique formulae
 fragment_entries = list(
     mmdb.collection.find({
         "formula_pretty": {
@@ -105,9 +124,13 @@ fragment_entries = list(
         "task_id": 1,
         "smiles": 1
     }))
+# where we've only projected out the relevant information for BDE calculations
+# and eventual BDE database entries
 
-print(len(fragment_entries))
-
+# The actual BDE analysis is done in Pymatgen. However, the function we are 
+# going to call must have principle and fragment entries in a general format
+# that is agnostic of how they were obtained. Thus we define the following
+# function to simplify and "agnostize" the data we have taken from our database
 def agnostize(entry):
     to_return = {}
     to_return["formula_pretty"] = entry["formula_pretty"]
@@ -126,19 +149,20 @@ def agnostize(entry):
         to_return["final_molecule"] = entry["output"]["optimized_molecule"]
     return to_return
 
-unique_fragment_entries = []
+# We now go through and apply this to our fragment entries while also removing
+# any duplicates we find:
+# NOTE: Is there a better and more "pythonic" way to do this?
 agnostic_entries = []
 for entry in fragment_entries:
+    agnostic_entry = agnostize(entry)
     found_equivalent = False
-    for unique_entry in unique_fragment_entries:
-        if entry["output"] == unique_entry["output"]:
+    for ag_entry in agnostic_entries:
+        if agnostic_entry == ag_entry:
             found_equivalent = True
     if not found_equivalent:
-        unique_fragment_entries += [entry]
         agnostic_entries += [agnostize(entry)]
 
-print(len(unique_fragment_entries))
-
+# Finally, we call the pymatgen analysis BDE function and print the result:
 bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries, allow_additional_charge_separation, multibreak)
 print(bond_dissociation.bond_dissociation_energies)
 
