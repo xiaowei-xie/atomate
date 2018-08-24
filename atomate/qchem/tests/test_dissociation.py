@@ -17,13 +17,14 @@ from pymatgen.analysis.graphs import build_MoleculeGraph
 
 # db_file = "/global/homes/s/sblau/config/db.json"
 db_file = "/Users/samuelblau/Desktop/db.json"
-xyz_file = "../test_files/top_11/PC.xyz"
-charge = 0
-# xyz_file = "../test_files/top_11/TFSI-.xyz"
-# charge = -1
-limit_charges = True
+# xyz_file = "../test_files/top_11/PC.xyz"
+# charge = 0
+xyz_file = "../test_files/top_11/TFSI-.xyz"
+charge = -1
+allow_additional_charge_separation = True
+multibreak = False
 
-if limit_charges:
+if not allow_additional_charge_separation:
     if charge > 0:
         valid_charges = [charge, charge-1]
     elif charge < 0:
@@ -113,7 +114,10 @@ def agnostize(entry):
     if "smiles" in entry:
         to_return["smiles"] = entry["smiles"]
     to_return["final_energy"] = entry["output"]["final_energy"]
-    to_return["initial_molecule"] = entry["input"]["initial_molecule"]
+    if "orig" in entry:
+        to_return["initial_molecule"] = entry["orig"]["molecule"]
+    else:
+        to_return["initial_molecule"] = entry["input"]["initial_molecule"]
     if "optimized_molecule" not in entry["output"]:
         if entry["calcs_reversed"][-1]["input"]["rem"]["job_type"] != "sp":
             raise AssertionError("Should only fail to find an optimized_molecule entry from a single point calculation!")
@@ -135,6 +139,6 @@ for entry in fragment_entries:
 
 print(len(unique_fragment_entries))
 
-bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries, limit_charges)
+bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries, allow_additional_charge_separation, multibreak)
 print(bond_dissociation.bond_dissociation_energies)
 
