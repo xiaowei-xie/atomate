@@ -14,6 +14,7 @@ from atomate.qchem.database import QChemCalcDb
 from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from pymatgen.analysis.graphs import build_MoleculeGraph
 
+module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 # First, define the db_file for previously calculated fragment entries,
 # the XYZ file and the charge of the principle molecule of which we aim
@@ -23,7 +24,7 @@ from pymatgen.analysis.graphs import build_MoleculeGraph
 db_file = "/Users/samuelblau/Desktop/db.json"
 # xyz_file = "../test_files/top_11/PC.xyz"
 # charge = 0
-xyz_file = "../test_files/top_11/TFSI-.xyz"
+xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "TFSI-.xyz")
 charge = -1
 
 # By default, we will consider one level of charge separation. If additional
