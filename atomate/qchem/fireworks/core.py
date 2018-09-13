@@ -33,7 +33,7 @@ class SinglePointFW(Firework):
                  multimode="openmp",
                  input_file="mol.qin",
                  output_file="mol.qout",
-                 max_cores=32,
+                 max_cores=">>max_cores<<",
                  qchem_input_params=None,
                  db_file=None,
                  parents=None,
@@ -93,7 +93,7 @@ class OptimizeFW(Firework):
                  multimode="openmp",
                  input_file="mol.qin",
                  output_file="mol.qout",
-                 max_cores=32,
+                 max_cores=">>max_cores<<",
                  qchem_input_params=None,
                  db_file=None,
                  parents=None,
@@ -154,7 +154,7 @@ class FrequencyFlatteningOptimizeFW(Firework):
                  multimode="openmp",
                  input_file="mol.qin",
                  output_file="mol.qout",
-                 max_cores=32,
+                 max_cores=">>max_cores<<",
                  qchem_input_params=None,
                  max_iterations=10,
                  max_molecule_perturb_scale=0.3,
@@ -226,12 +226,14 @@ class FrequencyFlatteningOptimizeFW(Firework):
 class FragmentFW(Firework):
     def __init__(self,
                  molecule=None,
+                 depth=1,
+                 open_rings=True,
                  name="fragment and optimize",
                  qchem_cmd="qchem",
                  multimode="openmp",
                  input_file="mol.qin",
                  output_file="mol.qout",
-                 max_cores=32,
+                 max_cores=">>max_cores<<",
                  qchem_input_params=None,
                  db_file=None,
                  check_db=True,
@@ -242,6 +244,9 @@ class FragmentFW(Firework):
 
         Args:
             molecule (Molecule): Input molecule.
+            depth (int): Fragmentation depth. Defaults to 1. See fragmenter firetask for more details.
+            open_rings (bool): Whether or not to open any rings encountered during fragmentation.
+                               Defaults to True. See fragmenter firetask for more details.
             name (str): Name for the Firework.
             qchem_cmd (str): Command to run QChem. Defaults to qchem.
             multimode (str): Parallelization scheme, either openmp or mpi.
@@ -263,6 +268,8 @@ class FragmentFW(Firework):
         t.append(
             FragmentMolecule(
                 molecule=molecule,
+                depth=depth,
+                open_rings=open_rings,
                 max_cores=max_cores,
                 qchem_input_params=qchem_input_params,
                 db_file=db_file,

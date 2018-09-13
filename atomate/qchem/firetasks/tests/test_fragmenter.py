@@ -17,6 +17,7 @@ from pymatgen.io.qchem.outputs import QCOutput
 from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from atomate.qchem.firetasks.parse_outputs import QChemToDb
 from atomate.utils.testing import AtomateTest
+from pymatgen.analysis.local_env import OpenBabelNN
 
 
 __author__ = "Samuel Blau"
@@ -53,18 +54,10 @@ class TestFragmentMolecule(AtomateTest):
     def test_edges_given_PC(self):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.pc, edges=self.pc_edges)
+            ft = FragmentMolecule(molecule=self.pc, edges=self.pc_edges, depth=0, open_rings=False)
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
-            self.assertEqual(
-                len(FWAction_patch.call_args[1]["additions"]), 295 * 3)
-
-    def test_babel_PC(self):
-        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
-                   ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.pc)
-            ft.run_task({})
-            self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,1])
             self.assertEqual(
                 len(FWAction_patch.call_args[1]["additions"]), 295 * 3)
 
@@ -72,34 +65,56 @@ class TestFragmentMolecule(AtomateTest):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
             ft = FragmentMolecule(
-                molecule=self.pc_frag1, edges=self.pc_frag1_edges)
+                molecule=self.pc_frag1, edges=self.pc_frag1_edges, depth=0)
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,1])
             self.assertEqual(
                 len(FWAction_patch.call_args[1]["additions"]), 12 * 3)
 
     def test_babel_PC_frag1(self):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.pc_frag1)
+            ft = FragmentMolecule(molecule=self.pc_frag1, depth=0)
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,1])
             self.assertEqual(
                 len(FWAction_patch.call_args[1]["additions"]), 12 * 3)
 
     def test_edges_given_TFSI(self):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.tfsi, edges=self.tfsi_edges)
+            ft = FragmentMolecule(molecule=self.tfsi, edges=self.tfsi_edges, depth=0)
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,1])
             self.assertEqual(
                 len(FWAction_patch.call_args[1]["additions"]), 468)
 
     def test_babel_TFSI(self):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.tfsi)
+            ft = FragmentMolecule(molecule=self.tfsi, depth=0)
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,1])
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 468)
+
+    def test_neg_TFSI_with_additional_charges(self):
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.neg_tfsi, depth=0, additional_charges=[-2,1])
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0,-2,1])
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 624)
+
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.neg_tfsi, depth=0, additional_charges=[0,1])
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
             self.assertEqual(
@@ -108,15 +123,19 @@ class TestFragmentMolecule(AtomateTest):
     def test_neg_TFSI(self):
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.neg_tfsi)
+            ft = FragmentMolecule(molecule=self.neg_tfsi, depth=0)
             ft.run_task({})
             self.assertEqual(ft.check_db,False)
+            self.assertEqual(ft.charges,[-1,0])
             self.assertEqual(
-                len(FWAction_patch.call_args[1]["additions"]), 624)
+                len(FWAction_patch.call_args[1]["additions"]), 312)
 
     def test_build_unique_relevant_molecules(self):
-        ft = FragmentMolecule(molecule=self.pc, edges=self.pc_edges)
+        ft = FragmentMolecule(molecule=self.pc, edges=self.pc_edges, depth=0)
         ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = False
         mol_graph = build_MoleculeGraph(self.pc, edges=self.pc_edges)
         ft.unique_fragments = mol_graph.build_unique_fragments()
         ft._build_unique_relevant_molecules()
@@ -125,8 +144,11 @@ class TestFragmentMolecule(AtomateTest):
         ref_mols = loadfn(os.path.join(module_dir, "pc_mols.json"))
         self.assertEqual(ft.unique_molecules, ref_mols)
 
-        ft = FragmentMolecule(molecule=self.pos_pc, edges=self.pc_edges)
+        ft = FragmentMolecule(molecule=self.pos_pc, edges=self.pc_edges, depth=0)
         ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1, 2]
+        ft.do_triplets = False
         mol_graph = build_MoleculeGraph(self.pos_pc, edges=self.pc_edges)
         ft.unique_fragments = mol_graph.build_unique_fragments()
         ft._build_unique_relevant_molecules()
@@ -135,8 +157,11 @@ class TestFragmentMolecule(AtomateTest):
         ref_mols = loadfn(os.path.join(module_dir, "pos_pc_mols.json"))
         self.assertEqual(ft.unique_molecules, ref_mols)
 
-        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges)
+        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges, depth=0)
         ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = False
         mol_graph = build_MoleculeGraph(self.pc_frag1, edges=self.pc_frag1_edges)
         ft.unique_fragments = mol_graph.build_unique_fragments()
         ft._build_unique_relevant_molecules()
@@ -145,9 +170,52 @@ class TestFragmentMolecule(AtomateTest):
         ref_mols = loadfn(os.path.join(module_dir, "pc_frag1_mols.json"))
         self.assertEqual(ft.unique_molecules, ref_mols)
 
-    def test_build_new_FWs(self):
-        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges)
+    def test_build_unique_relevant_molecules_with_triplets(self):
+        ft = FragmentMolecule(molecule=self.pc, edges=self.pc_edges, depth=0)
         ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = True
+        mol_graph = build_MoleculeGraph(self.pc, edges=self.pc_edges)
+        ft.unique_fragments = mol_graph.build_unique_fragments()
+        ft._build_unique_relevant_molecules()
+        self.assertEqual(len(ft.unique_molecules), 1323)
+        # dumpfn(ft.unique_molecules, os.path.join(module_dir,"pc_mols_with_trips.json"))
+        ref_mols = loadfn(os.path.join(module_dir, "pc_mols_with_trips.json"))
+        self.assertEqual(ft.unique_molecules, ref_mols)
+
+        ft = FragmentMolecule(molecule=self.pos_pc, edges=self.pc_edges, depth=0)
+        ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1, 2]
+        ft.do_triplets = True
+        mol_graph = build_MoleculeGraph(self.pos_pc, edges=self.pc_edges)
+        ft.unique_fragments = mol_graph.build_unique_fragments()
+        ft._build_unique_relevant_molecules()
+        self.assertEqual(len(ft.unique_molecules), 1770)
+        # dumpfn(ft.unique_molecules, os.path.join(module_dir,"pos_pc_mols_with_trips.json"))
+        ref_mols = loadfn(os.path.join(module_dir, "pos_pc_mols_with_trips.json"))
+        self.assertEqual(ft.unique_molecules, ref_mols)
+
+        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges, depth=0)
+        ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = True
+        mol_graph = build_MoleculeGraph(self.pc_frag1, edges=self.pc_frag1_edges)
+        ft.unique_fragments = mol_graph.build_unique_fragments()
+        ft._build_unique_relevant_molecules()
+        self.assertEqual(len(ft.unique_molecules), 54)
+        # dumpfn(ft.unique_molecules, os.path.join(module_dir,"pc_frag1_mols_with_trips.json"))
+        ref_mols = loadfn(os.path.join(module_dir, "pc_frag1_mols_with_trips.json"))
+        self.assertEqual(ft.unique_molecules, ref_mols)
+
+    def test_build_new_FWs(self):
+        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges, depth=0)
+        ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = False
         mol_graph = build_MoleculeGraph(self.pc_frag1, edges=self.pc_frag1_edges)
         ft.unique_fragments = mol_graph.build_unique_fragments()
         ft._build_unique_relevant_molecules()
@@ -156,12 +224,18 @@ class TestFragmentMolecule(AtomateTest):
         self.assertEqual(len(new_FWs), 36)
 
     def test_in_database_through_build_new_FWs(self):
-        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges)
+        ft = FragmentMolecule(molecule=self.pc_frag1, edges=self.pc_frag1_edges, depth=0)
         ft.mol = ft.get("molecule")
+        ft.depth = ft.get("depth")
+        ft.charges = [-1, 0, 1]
+        ft.do_triplets = False
         mol_graph = build_MoleculeGraph(self.pc_frag1, edges=self.pc_frag1_edges)
         ft.unique_fragments = mol_graph.build_unique_fragments()
         ft._build_unique_relevant_molecules()
-        ft.all_relevant_docs = loadfn(os.path.join(module_dir, "doc.json"))
+        docs = loadfn(os.path.join(module_dir, "doc.json"))
+        for doc in docs:
+            doc["output"]["initial_molecule"] = doc["output"]["initial_molecule"].as_dict()
+        ft.all_relevant_docs = docs
         new_FWs = ft._build_new_FWs()
         self.assertEqual(len(new_FWs), 29)
 
@@ -173,14 +247,74 @@ class TestFragmentMolecule(AtomateTest):
         parse_firetask.run_task({})
         with patch("atomate.qchem.firetasks.fragmenter.FWAction"
                    ) as FWAction_patch:
-            ft = FragmentMolecule(molecule=self.neg_tfsi, db_file=db_file)
+            ft = FragmentMolecule(molecule=self.neg_tfsi, db_file=db_file, depth=0, additional_charges=[-2,1])
             ft.run_task({})
             self.assertEqual(ft.check_db,True)
+            self.assertEqual(ft.charges,[-1,0,-2,1])
             self.assertEqual(
                 len(FWAction_patch.call_args[1]["additions"]), 623)
             self.assertEqual(ft._in_database(mol2620),True)
             mol2620.set_charge_and_spin(charge=0)
             self.assertEqual(ft._in_database(mol2620),False)
+
+    def test_babel_PC_with_RO_depth_0_vs_depth_10(self):
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.pc, depth=0, open_rings=True)
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            depth0frags = ft.unique_fragments
+            self.assertEqual(len(depth0frags), 509)
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 1527)
+
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.pc, depth=10, open_rings=True)
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            depth10frags = ft.unique_fragments
+            self.assertEqual(len(depth10frags), 509)
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 1513)
+
+        for fragment10 in depth10frags:
+            found = False
+            for fragment0 in depth0frags:
+                if fragment0.isomorphic_to(fragment10):
+                    found = True
+                    break
+            self.assertEqual(found, True)
+
+    def test_babel_PC_depth_0_vs_depth_10(self):
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.pc, depth=0, open_rings=False)
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            depth0frags = ft.unique_fragments
+            self.assertEqual(len(depth0frags), 295)
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 295*3)
+
+        with patch("atomate.qchem.firetasks.fragmenter.FWAction"
+                   ) as FWAction_patch:
+            ft = FragmentMolecule(molecule=self.pc, depth=10, open_rings=False)
+            ft.run_task({})
+            self.assertEqual(ft.check_db,False)
+            depth10frags = ft.unique_fragments
+            self.assertEqual(len(depth10frags), 63)
+            self.assertEqual(
+                len(FWAction_patch.call_args[1]["additions"]), 63*3)
+
+        for fragment10 in depth10frags:
+            found = False
+            for fragment0 in depth0frags:
+                if fragment0.isomorphic_to(fragment10):
+                    found = True
+            self.assertEqual(found, True)
+
+
 
 if __name__ == "__main__":
     unittest.main()
