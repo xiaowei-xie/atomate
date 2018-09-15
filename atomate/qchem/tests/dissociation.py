@@ -11,7 +11,7 @@ from pymatgen.core.structure import Molecule
 from pymatgen.analysis.bond_dissociation import BondDissociationEnergies
 from pymatgen.analysis.local_env import OpenBabelNN
 from atomate.qchem.database import QChemCalcDb
-from atomate.qchem.firetasks.fragmenter import FragmentMolecule
+from pymatgen.analysis.fragmenter import Fragmenter
 from pymatgen.analysis.graphs import build_MoleculeGraph
 
 module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -22,10 +22,11 @@ module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 # db_file = "/global/homes/s/sblau/config/db.json"
 db_file = "/Users/samuelblau/Desktop/db.json"
-# xyz_file = "../test_files/top_11/PC.xyz"
-# charge = 0
-xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "TFSI-.xyz")
-charge = -1
+xyz_file = "../test_files/top_11/PC.xyz"
+charge = 0
+# xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "TFSI-.xyz")
+# charge = -1
+pcm_dielectric = 0
 
 # By default, we will consider one level of charge separation. If additional
 # charge separation should be considered, set the following parameter to True:
@@ -82,27 +83,33 @@ for entry in target_entries:
                                               reorder=False,
                                               extend_structure=False)
         if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
-            num_good_entries += 1
-            target_entry = entry
+            if pcm_dielectric != 0:
+                if "solvent_method" in entry["calcs_reversed"][-1]["input"]["rem"]:
+                    if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["pcm"] == pcm_dielectric:
+                        num_good_entries += 1
+                        target_entry = entry
+            else:
+                if "solvent_method" not in entry["calcs_reversed"][-1]["input"]["rem"]:
+                    num_good_entries += 1
+                    target_entry = entry
+
+if num_good_entries == 0:
+    print("No good principle entries found! Exiting...")
+    raise RuntimeError
 
 # There should only be one principle entry!
 if num_good_entries > 1:
     print("WARNING: There are " + str(num_good_entries) + " valid entries to choose from! Currently using the last one...")
 
-# Leverage the FragmentMolecule firetask in order to build a list of
-# all unique molecules relevant to the fragmentation and thus BDEs 
-# for the principle:
-FM = FragmentMolecule()
-FM.mol = mol
-FM.unique_fragments = mol_graph.build_unique_fragments()
-FM._build_unique_relevant_molecules()
+# Use the fragmenter in pymatgen to get a list of unique fragments relevant for BDE calculations:
+fragments = Fragmenter(molecule=mol, depth=1).unique_fragments
 
-# Convert the list of molecules into a list of formulae which can then
+# Convert the list of fragments into a list of formulae which can then
 # be used to search our database:
 unique_formulae = []
-for molecule in FM.unique_molecules:
-    if molecule.composition.reduced_formula not in unique_formulae:
-        unique_formulae.append(molecule.composition.reduced_formula)
+for mol_graph in fragments:
+    if mol_graph.molecule.composition.reduced_formula not in unique_formulae:
+        unique_formulae.append(mol_graph.molecule.composition.reduced_formula)
 
 # Find all fragment entries in our database using our unique formulae
 fragment_entries = list(
