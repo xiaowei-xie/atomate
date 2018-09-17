@@ -84,7 +84,7 @@ for entry in target_entries:
         if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
             if pcm_dielectric != 0:
                 if "solvent_method" in entry["calcs_reversed"][-1]["input"]["rem"]:
-                    if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["solvent"]["dielectric"] == pcm_dielectric:
+                    if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["solvent"]["dielectric"] == str(pcm_dielectric):
                         num_good_entries += 1
                         target_entry = entry
             else:
@@ -121,7 +121,7 @@ find_dict = {"formula_pretty": {"$in": unique_formulae},
              }
 
 if pcm_dielectric != 0:
-    find_dict["calcs_reversed.input.solvent.dielectric"] = pcm_dielectric
+    find_dict["calcs_reversed.input.solvent.dielectric"] = str(pcm_dielectric)
 
 fragment_entries = list(
     mmdb.collection.find(find_dict, {
