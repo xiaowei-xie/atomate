@@ -20,13 +20,13 @@ module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 # the XYZ file and the charge of the principle molecule of which we aim
 # to compute the bond dissociation energies
 
-# db_file = "/global/homes/s/sblau/config/db.json"
-db_file = "/Users/samuelblau/Desktop/db.json"
+db_file = "/global/homes/s/sblau/config/db.json"
+# db_file = "/Users/samuelblau/Desktop/db.json"
 xyz_file = "../test_files/top_11/PC.xyz"
 charge = 0
 # xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "TFSI-.xyz")
 # charge = -1
-pcm_dielectric = 0
+pcm_dielectric = 65.0
 
 # By default, we will consider one level of charge separation. If additional
 # charge separation should be considered, set the following parameter to True:
@@ -66,11 +66,10 @@ target_entries = list(
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
-        "calcs_reversed.input.rem": 1
+        "calcs_reversed.input": 1
     }))
 
-# Then narrow those to an optimized entry which has our desired charge, multiplicity, and SCF strategy.
-# NOTE: We will need to check for the correct PCM as well in the future. 
+# Then narrow those to an optimized entry which has our desired charge, multiplicity, SCF strategy, and PCM dielectric.
 num_good_entries = 0
 for entry in target_entries:
     if "optimized_molecule" in entry["output"]:
@@ -85,7 +84,7 @@ for entry in target_entries:
         if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
             if pcm_dielectric != 0:
                 if "solvent_method" in entry["calcs_reversed"][-1]["input"]["rem"]:
-                    if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["pcm"] == pcm_dielectric:
+                    if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["solvent"]["dielectric"] == pcm_dielectric:
                         num_good_entries += 1
                         target_entry = entry
             else:
@@ -112,19 +111,20 @@ for mol_graph in fragments:
         unique_formulae.append(mol_graph.molecule.composition.reduced_formula)
 
 # Find all fragment entries in our database using our unique formulae
+
+find_dict = {"formula_pretty": {"$in": unique_formulae},
+             "input.initial_molecule.charge": {"$in": valid_charges},
+             "calcs_reversed.input.rem.method": target_entry["calcs_reversed"][-1]["input"]["rem"]["method"],
+             "calcs_reversed.input.rem.basis": target_entry["calcs_reversed"][-1]["input"]["rem"]["basis"],
+             "calcs_reversed.input.rem.scf_algorithm": target_entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"],
+             "state": "successful"
+             }
+
+if pcm_dielectric != 0:
+    find_dict["calcs_reversed.input.solvent.dielectric"] = pcm_dielectric
+
 fragment_entries = list(
-    mmdb.collection.find({
-        "formula_pretty": {
-            "$in": unique_formulae
-        },
-        "input.initial_molecule.charge": {
-            "$in": valid_charges
-        },
-        "calcs_reversed.input.rem.method": target_entry["calcs_reversed"][-1]["input"]["rem"]["method"],
-        "calcs_reversed.input.rem.basis": target_entry["calcs_reversed"][-1]["input"]["rem"]["basis"],
-        "calcs_reversed.input.rem.scf_algorithm": target_entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"],
-        "state": "successful"
-    }, {
+    mmdb.collection.find(find_dict, {
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
