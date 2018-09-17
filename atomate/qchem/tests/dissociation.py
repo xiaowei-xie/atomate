@@ -128,7 +128,7 @@ fragment_entries = list(
         "formula_pretty": 1,
         "input": 1,
         "output": 1,
-        "calcs_reversed.input.rem": 1,
+        "calcs_reversed.input": 1,
         "task_id": 1,
         "smiles": 1
     }))
@@ -155,6 +155,8 @@ def agnostize(entry):
         to_return["final_molecule"] = entry["output"]["initial_molecule"]
     else:
         to_return["final_molecule"] = entry["output"]["optimized_molecule"]
+    if pcm_dielectric != 0:
+        to_return["pcm_dielectric"] = int(entry["calcs_reversed"][-1]["input"]["solvent"]["dielectric"])
     return to_return
 
 # We now go through and apply this to our fragment entries while also removing
