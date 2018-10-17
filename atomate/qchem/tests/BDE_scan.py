@@ -103,8 +103,12 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
                         if "solvent_method" not in entry["calcs_reversed"][-1]["input"]["rem"]:
                             num_good_entries += 1
                             target_entry = entry
-        if num_good_entries != 0:
-            print("Found a potential entry, but beware that connectivity has changed!")
+        if num_good_entries == 1:
+            print("Found a potential entry, but beware that connectivity has changed! Updating principle molecule...")
+            mol = Molecule.from_dict(target_entry["output"]["optimized_molecule"])
+        elif num_good_entries > 1:
+            print("Found multiple potential entries. Need to implement this when less lazy! Exiting...")
+            raise RuntimeError
 
     if num_good_entries == 0:
         print("No good principle entries found! Exiting...")
