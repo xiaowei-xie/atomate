@@ -36,7 +36,7 @@ def agnostize(entry):
     return to_return
 
 
-def call_BDE_analysis(molecule, db_file, dielectric, allow_additional_charge_separation=False, multibreak=False)
+def call_BDE_analysis(molecule, db_file, dielectric, allow_additional_charge_separation=False, multibreak=False):
 
     if not allow_additional_charge_separation:
         if charge > 0:
