@@ -22,11 +22,13 @@ module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 db_file = "/global/homes/s/sblau/config/db.json"
 # db_file = "/Users/samuelblau/Desktop/db.json"
-xyz_file = "../test_files/top_11/PC.xyz"
-charge = 0
+# xyz_file = "../test_files/top_11/PC.xyz"
+# charge = 0
 # xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "TFSI-.xyz")
-# charge = -1
-pcm_dielectric = 65.0
+xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "EC.xyz")
+charge = -1
+# pcm_dielectric = 65.0
+pcm_dielectric = 40.0
 
 # By default, we will consider one level of charge separation. If additional
 # charge separation should be considered, set the following parameter to True:
