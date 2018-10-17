@@ -155,6 +155,6 @@ eps_vals = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.
 for eps in eps_vals:
     print(eps)
     vals = call_BDE_analysis(mol, db_file, eps)
-    print(entry[0] for entry in vals)
+    print([entry[0] for entry in vals])
     print()
 
