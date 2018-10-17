@@ -36,7 +36,7 @@ def agnostize(entry):
     return to_return
 
 
-def call_BDE_analysis(molecule, db_file, dielectric, allow_additional_charge_separation=False, multibreak=False):
+def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge_separation=False, multibreak=False):
 
     if not allow_additional_charge_separation:
         if charge > 0:
@@ -152,6 +152,7 @@ mol.set_charge_and_spin(charge=charge)
 eps_vals = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 
 for eps in eps_vals:
+    print(eps)
     vals = call_BDE_analysis(mol, db_file, eps)
     print(vals[:,0])
     print()
