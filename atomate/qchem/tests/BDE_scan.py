@@ -58,7 +58,7 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
     # Find all entries in the database for our principle
     target_entries = list(
         mmdb.collection.find({
-            "formula_pretty": mol.composition.reduced_formula
+            "formula_pretty": molecule.composition.reduced_formula
         }, {
             "formula_pretty": 1,
             "input": 1,
@@ -105,7 +105,7 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
                             target_entry = entry
         if num_good_entries == 1:
             print("Found a potential entry, but beware that connectivity has changed! Updating principle molecule...")
-            mol = Molecule.from_dict(target_entry["output"]["optimized_molecule"])
+            molecule = Molecule.from_dict(target_entry["output"]["optimized_molecule"])
         elif num_good_entries > 1:
             print("Found multiple potential entries. Need to implement this when less lazy! Exiting...")
             raise RuntimeError
@@ -119,7 +119,7 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
         print("WARNING: There are " + str(num_good_entries) + " valid entries to choose from! Currently using the last one...")
 
     # Use the fragmenter in pymatgen to get a list of unique fragments relevant for BDE calculations:
-    fragments = Fragmenter(molecule=mol, depth=1).unique_fragments
+    fragments = Fragmenter(molecule=molecule, depth=1).unique_fragments
 
     # Convert the list of fragments into a list of formulae which can then
     # be used to search our database:
