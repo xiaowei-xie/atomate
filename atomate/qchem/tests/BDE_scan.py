@@ -15,7 +15,8 @@ from pymatgen.analysis.fragmenter import Fragmenter
 from pymatgen.analysis.graphs import MoleculeGraph
 
 
-def agnostize(entry):
+# remove unnecessary pcm_dielectric param when less lazy
+def agnostize(entry, pcm_dielectric):
     to_return = {}
     to_return["formula_pretty"] = entry["formula_pretty"]
     if "smiles" in entry:
@@ -130,16 +131,16 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
     # Remove duplicates and agnostize entries
     agnostic_entries = []
     for entry in fragment_entries:
-        agnostic_entry = agnostize(entry)
+        agnostic_entry = agnostize(entry, pcm_dielectric)
         found_equivalent = False
         for ag_entry in agnostic_entries:
             if agnostic_entry == ag_entry:
                 found_equivalent = True
         if not found_equivalent:
-            agnostic_entries += [agnostize(entry)]
+            agnostic_entries += [agnostize(entry, pcm_dielectric)]
 
     # Finally, we call the pymatgen analysis BDE function and print the result:
-    bond_dissociation = BondDissociationEnergies(agnostize(target_entry), agnostic_entries, allow_additional_charge_separation, multibreak)
+    bond_dissociation = BondDissociationEnergies(agnostize(target_entry, pcm_dielectric), agnostic_entries, allow_additional_charge_separation, multibreak)
     return bond_dissociation.bond_dissociation_energies
 
 
