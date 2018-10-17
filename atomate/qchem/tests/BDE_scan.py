@@ -147,14 +147,18 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
 module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 db_file = "/global/homes/s/sblau/config/db.json"
 xyz_file = os.path.join(module_dir, "..", "test_files", "top_11", "EC.xyz")
-charge = -1
+charge = -2
 mol = Molecule.from_file(xyz_file)
 mol.set_charge_and_spin(charge=charge)
 eps_vals = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 
 for eps in eps_vals:
     print(eps)
-    vals = call_BDE_analysis(mol, db_file, eps)
-    print([entry[0] for entry in vals])
-    print()
+    try:
+        vals = call_BDE_analysis(mol, db_file, eps)
+        print([entry[0] for entry in vals])
+        print()
+    except RuntimeError:
+        print('ERROR')
+        print()
 
