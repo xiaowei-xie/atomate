@@ -12,7 +12,7 @@ from pymatgen.analysis.bond_dissociation import BondDissociationEnergies
 from pymatgen.analysis.local_env import OpenBabelNN
 from atomate.qchem.database import QChemCalcDb
 from pymatgen.analysis.fragmenter import Fragmenter
-from pymatgen.analysis.graphs import build_MoleculeGraph
+from pymatgen.analysis.graphs import MoleculeGraph
 
 module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
@@ -52,10 +52,7 @@ else:
 # Build the principle Molecule and MoleculeGraph
 mol = Molecule.from_file(xyz_file)
 mol.set_charge_and_spin(charge=charge)
-mol_graph = build_MoleculeGraph(mol,
-                                strategy=OpenBabelNN,
-                                reorder=False,
-                                extend_structure=False)
+mol_graph = MoleculeGraph.with_local_env_strategy(mol, OpenBabelNN(), reorder=False, extend_structure=False)
 
 # Connect to the database
 mmdb = QChemCalcDb.from_db_file(db_file, admin=True)
@@ -75,14 +72,10 @@ target_entries = list(
 num_good_entries = 0
 for entry in target_entries:
     if "optimized_molecule" in entry["output"]:
-        initial_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["input"]["initial_molecule"]),
-                                                strategy=OpenBabelNN,
-                                                reorder=False,
-                                                extend_structure=False)
-        final_mol_graph = build_MoleculeGraph(Molecule.from_dict(entry["output"]["optimized_molecule"]),
-                                              strategy=OpenBabelNN,
-                                              reorder=False,
-                                              extend_structure=False)
+        initial_mol_graph = MoleculeGraph.with_local_env_strategy(Molecule.from_dict(entry["input"]["initial_molecule"]),
+                                                                  OpenBabelNN(), reorder=False, extend_structure=False)
+        final_mol_graph = MoleculeGraph.with_local_env_strategy(Molecule.from_dict(entry["output"]["optimized_molecule"]),
+                                                                OpenBabelNN(), reorder=False, extend_structure=False)
         if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.isomorphic_to(final_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
             if pcm_dielectric != 0:
                 if "solvent_method" in entry["calcs_reversed"][-1]["input"]["rem"]:
