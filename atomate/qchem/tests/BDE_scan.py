@@ -86,6 +86,27 @@ def call_BDE_analysis(molecule, db_file, pcm_dielectric, allow_additional_charge
                         target_entry = entry
 
     if num_good_entries == 0:
+        print("No good principle entries found! Will look for entries that match everything but final structure in case the initial FF yielded a modified connectivity...")
+        for entry in target_entries:
+            if "optimized_molecule" in entry["output"]:
+                initial_mol_graph = MoleculeGraph.with_local_env_strategy(Molecule.from_dict(entry["input"]["initial_molecule"]),
+                                                                          OpenBabelNN(), reorder=False, extend_structure=False)
+                final_mol_graph = MoleculeGraph.with_local_env_strategy(Molecule.from_dict(entry["output"]["optimized_molecule"]),
+                                                                        OpenBabelNN(), reorder=False, extend_structure=False)
+                if mol_graph.isomorphic_to(initial_mol_graph) and mol_graph.molecule.charge == final_mol_graph.molecule.charge and mol_graph.molecule.spin_multiplicity == final_mol_graph.molecule.spin_multiplicity and entry["calcs_reversed"][-1]["input"]["rem"]["scf_algorithm"] == "gdm":
+                    if pcm_dielectric != 0:
+                        if "solvent_method" in entry["calcs_reversed"][-1]["input"]["rem"]:
+                            if entry["calcs_reversed"][-1]["input"]["rem"]["solvent_method"] == "pcm" and entry["calcs_reversed"][-1]["input"]["solvent"]["dielectric"] == str(pcm_dielectric):
+                                num_good_entries += 1
+                                target_entry = entry
+                    else:
+                        if "solvent_method" not in entry["calcs_reversed"][-1]["input"]["rem"]:
+                            num_good_entries += 1
+                            target_entry = entry
+        if num_good_entries != 0:
+            print("Found a potential entry, but beware that connectivity has changed!")
+
+    if num_good_entries == 0:
         print("No good principle entries found! Exiting...")
         raise RuntimeError
 
