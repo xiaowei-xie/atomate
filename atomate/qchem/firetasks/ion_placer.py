@@ -42,7 +42,7 @@ class PlaceIon(FiretaskBase):
         mulliken = None
         if fw_spec.get("prev_calc_mulliken"):
             self._set_properties(fw_spec.get("prev_calc_mulliken"))
-        elif self.get("mulliken").all():
+        elif self.get("mulliken")[0].all():
             self._set_properties(self.get("mulliken")[0])
         else:
             for site in self.mol:
